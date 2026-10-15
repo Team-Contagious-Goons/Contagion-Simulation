@@ -262,7 +262,7 @@ func main() {
 		}
 		game.step(i)
 		fmt.Print(game.String()) // Clear screen and print field.
-		time.Sleep(1000 * time.Millisecond)
+		time.Sleep(100 * time.Millisecond)
 	}
 
 	fmt.Println(game.stats())
