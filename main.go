@@ -17,16 +17,18 @@ const (
 )
 
 type Agent struct {
-	x, y     int
-	infected bool
+	x, y           int
+	infected       bool
+	infectionTimer int
 }
 
 type Game struct {
-	agents          [][]Agent
-	agentsCount     int
-	infectedCount   int
-	h, w            int
-	infectionChance float64
+	agents            [][]Agent
+	agentsCount       int
+	infectedCount     int
+	h, w              int
+	infectionChance   float64
+	infectionDuration int
 }
 
 func (g *Game) step(step int) {
@@ -65,13 +67,27 @@ func (g *Game) step(step int) {
 			agent.x = newX
 			agent.y = newY
 
+			moved := false
 			// Only move agent
 			if newAgents[newX][newY] == (Agent{}) {
 				newAgents[newX][newY] = agent
 				newAgents[x][y] = Agent{}
+				moved = true
 			}
 
 			if agent.infected {
+
+				if moved {
+					newAgents[newX][newY].infectionTimer--
+					if newAgents[newX][newY].infectionTimer == 0 {
+						newAgents[newX][newY].infected = false
+					}
+				} else {
+					newAgents[x][y].infectionTimer--
+					if newAgents[x][y].infectionTimer == 0 {
+						newAgents[x][y].infected = false
+					}
+				}
 				// check up down left right
 				if agent.x != 0 && newAgents[newX+LEFT][newY] != (Agent{}) && !newAgents[newX+LEFT][newY].infected {
 					shouldInfect := rand.Float64() < g.infectionChance
@@ -107,7 +123,7 @@ func (g *Game) step(step int) {
 	g.agents = newAgents
 }
 
-func newGame(width int, height int, agentCount int, infectedCount int, infectionChance float64) *Game {
+func newGame(width int, height int, agentCount int, infectedCount int, infectionChance float64, infectionDuration int) *Game {
 	g := Game{}
 	agents := make([][]Agent, width)
 	for i := range width {
@@ -123,6 +139,7 @@ func newGame(width int, height int, agentCount int, infectedCount int, infection
 		agents[randX][randY].y = randY
 		if infectedCount != 0 {
 			agents[randX][randY].infected = true
+			agents[randX][randY].infectionTimer = infectionDuration
 			infectedCount--
 		} else {
 			agents[randX][randY].infected = false
@@ -135,6 +152,7 @@ func newGame(width int, height int, agentCount int, infectedCount int, infection
 	g.h = height
 	g.infectionChance = infectionChance
 	g.agentsCount = agentCount
+	g.infectionDuration = infectionDuration
 	return &g
 }
 
@@ -173,8 +191,8 @@ func (g *Game) stats() string {
 	}
 
 	return fmt.Sprintf(
-		"Game Stats: Size: {%d, %d}  Agents: %d  Starting-Infected: %d  Infection Rate: %f\n\tEnd-Agents: %d End-Infected: %d",
-		g.w, g.h, g.agentsCount, g.infectedCount, g.infectionChance, endAgents, endInfected)
+		"Game Stats: Size: {%d, %d}  Agents: %d  Starting-Infected: %d  Infection Rate: %f  Infection Duration: %d \nEnd-Agents: %d End-Infected: %d",
+		g.w, g.h, g.agentsCount, g.infectedCount, g.infectionChance, g.infectionDuration, endAgents, endInfected)
 
 }
 func main() {
@@ -182,10 +200,11 @@ func main() {
 	h := 50
 	w := 90
 	agentCount := 300
-	infectedCount := 100
-	infectionChance := 0.4
+	infectedCount := 50
+	infectionChance := 0.2
+	infectionDuration := 3
 
-	game := newGame(h, w, agentCount, infectedCount, infectionChance)
+	game := newGame(h, w, agentCount, infectedCount, infectionChance, infectionDuration)
 
 	for i := range 50 {
 		cmd := exec.Command("clear") //Linux example, its tested
