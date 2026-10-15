@@ -47,6 +47,27 @@ func (g *Game) step(step int) {
 			xStep := rand.Intn(3) - 1
 			yStep := rand.Intn(3) - 1
 
+			if agent.infected {
+				targetX, targetY, found := g.find(agent.x, agent.y)
+				if found {
+					if targetX > agent.x {
+						xStep = RIGHT
+					} else if targetX < agent.x {
+						xStep = LEFT
+					} else {
+						xStep = 0
+					}
+
+					if targetY > agent.y {
+						yStep = DOWN
+					} else if targetY < agent.y {
+						yStep = UP
+					} else {
+						yStep = 0
+					}
+				}
+			}
+
 			newX := agent.x + xStep
 			newY := agent.y + yStep
 
@@ -195,13 +216,39 @@ func (g *Game) stats() string {
 		g.w, g.h, g.agentsCount, g.infectedCount, g.infectionChance, g.infectionDuration, endAgents, endInfected)
 
 }
+
+func (g *Game) find(x, y int) (int, int, bool) {
+	minDist := 99
+	targetX, targetY := -1, -1
+	found := false
+
+	for dx := -2; dx <= 2; dx++ {
+		for dy := -2; dy <= 2; dy++ {
+			nx, ny := x+dx, y+dy
+
+			if nx >= 0 && nx < g.w && ny >= 0 && ny < g.h && (dx != 0 || dy != 0) {
+				target := g.agents[nx][ny]
+
+				if target != (Agent{}) && !target.infected {
+					dist := dx*dx + dy*dy
+					if dist < minDist {
+						minDist = dist
+						targetX, targetY = nx, ny
+						found = true
+					}
+				}
+			}
+		}
+	}
+	return targetX, targetY, found
+}
 func main() {
 
 	h := 50
-	w := 90
+	w := 50
 	agentCount := 300
 	infectedCount := 50
-	infectionChance := 0.2
+	infectionChance := 1.0
 	infectionDuration := 3
 
 	game := newGame(h, w, agentCount, infectedCount, infectionChance, infectionDuration)
@@ -215,7 +262,7 @@ func main() {
 		}
 		game.step(i)
 		fmt.Print(game.String()) // Clear screen and print field.
-		time.Sleep(100 * time.Millisecond)
+		time.Sleep(1000 * time.Millisecond)
 	}
 
 	fmt.Println(game.stats())
