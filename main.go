@@ -67,6 +67,26 @@ func (g *Game) step(step int) {
 					}
 				}
 			}
+			if !agent.infected {
+				bestMoveX, bestMoveY, found := g.escape(agent.x, agent.y)
+				if found {
+					if bestMoveX > agent.x {
+						xStep = RIGHT
+					} else if bestMoveX < agent.x {
+						xStep = LEFT
+					} else {
+						xStep = 0
+					}
+
+					if bestMoveY > agent.y {
+						yStep = DOWN
+					} else if bestMoveY < agent.y {
+						yStep = UP
+					} else {
+						yStep = 0
+					}
+				}
+			}
 
 			newX := agent.x + xStep
 			newY := agent.y + yStep
@@ -241,13 +261,61 @@ func (g *Game) find(x, y int) (int, int, bool) {
 		}
 	}
 	return targetX, targetY, found
+
+}
+func (g *Game) escape(x, y int) (int, int, bool) {
+	closestInfectedDist := 999
+	infX, infY := -1, -1
+	foundInfected := false
+
+	scanRadius := 3
+	for dx := -scanRadius; dx <= scanRadius; dx++ {
+		for dy := -scanRadius; dy <= scanRadius; dy++ {
+			nx, ny := x+dx, y+dy
+			if nx >= 0 && nx < g.w && ny >= 0 && ny < g.h && (dx != 0 || dy != 0) {
+				target := g.agents[nx][ny]
+
+				if target != (Agent{}) && target.infected {
+					dist := dx*dx + dy*dy
+					if dist < closestInfectedDist {
+						closestInfectedDist = dist
+						infX, infY = nx, ny
+						foundInfected = true
+					}
+				}
+			}
+		}
+	}
+	if !foundInfected {
+		return x, y, false
+	}
+
+	bestMoveX, bestMoveY := x, y
+	maxDistFromInfected := -1
+
+	for moveDX := -1; moveDX <= 1; moveDX++ {
+		for moveDY := -1; moveDY <= 1; moveDY++ {
+			nx, ny := x+moveDX, y+moveDY
+
+			if nx >= 0 && nx < g.w && ny >= 0 && ny < g.h {
+				distToInfected := (nx-infX)*(nx-infX) + (ny-infY)*(ny-infY)
+
+				if distToInfected > maxDistFromInfected {
+					maxDistFromInfected = distToInfected
+					bestMoveX, bestMoveY = nx, ny
+				}
+			}
+		}
+	}
+
+	return bestMoveX, bestMoveY, true
 }
 func main() {
 
 	h := 50
 	w := 50
 	agentCount := 300
-	infectedCount := 50
+	infectedCount := 1
 	infectionChance := 1.0
 	infectionDuration := 3
 
@@ -262,7 +330,7 @@ func main() {
 		}
 		game.step(i)
 		fmt.Print(game.String()) // Clear screen and print field.
-		time.Sleep(100 * time.Millisecond)
+		time.Sleep(500 * time.Millisecond)
 	}
 
 	fmt.Println(game.stats())
