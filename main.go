@@ -90,7 +90,7 @@ func (g *Game) step(step int) {
 
 			moved := false
 			// Only move agent
-			if newAgents[newX][newY] == (Agent{}) {
+			if g.agents[newX][newY] == (Agent{}) && newAgents[newX][newY] == (Agent{}) {
 				newAgents[newX][newY] = agent
 				newAgents[x][y] = Agent{}
 				moved = true
@@ -153,11 +153,22 @@ func newGame(width int, height int, agentCount int, infectedCount int, infection
 
 	g.infectedCount = infectedCount
 
-	for range agentCount {
+	for i := range agentCount {
+
 		randX := rand.Intn(width)
 		randY := rand.Intn(height)
+
+		// This will keep going until it finds an empty cell and
+		// prevents two agents from spawning in the same cell
+		for agents[randX][randY] != (Agent{}) {
+			randX = rand.Intn(width)
+			randY = rand.Intn(height)
+		}
+		fmt.Println(i)
+
 		agents[randX][randY].x = randX
 		agents[randX][randY].y = randY
+
 		if infectedCount != 0 {
 			agents[randX][randY].infected = true
 			agents[randX][randY].infectionTimer = infectionDuration
@@ -244,23 +255,23 @@ func (g *Game) find(x, y int) (int, int, bool) {
 }
 func main() {
 
-	h := 50
-	w := 50
-	agentCount := 300
+	h := 10
+	w := 10
+	agentCount := 100
 	infectedCount := 50
 	infectionChance := 1.0
 	infectionDuration := 3
 
 	game := newGame(h, w, agentCount, infectedCount, infectionChance, infectionDuration)
 
-	for i := range 50 {
+	for range 1 {
 		cmd := exec.Command("clear") //Linux example, its tested
 		cmd.Stdout = os.Stdout
 		err := cmd.Run()
 		if err != nil {
 			// ignore
 		}
-		game.step(i)
+		// game.step(i)
 		fmt.Print(game.String()) // Clear screen and print field.
 		time.Sleep(100 * time.Millisecond)
 	}
