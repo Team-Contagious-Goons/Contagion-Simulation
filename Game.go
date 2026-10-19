@@ -33,6 +33,7 @@ type Game struct {
 	infectionDuration int
 	iteration         int
 	lastStepTime      time.Time
+	stepDelay         int
 }
 
 func (g *Game) Draw(screen *ebiten.Image) {
@@ -62,12 +63,14 @@ func (g *Game) Layout(int, int) (int, int) {
 
 func (g *Game) Update() error {
 	// step every 10 millis
-
 	//if time.Duration(g.lastStepTime)
-
-	g.step()
-	g.lastStepTime = time.Now()
-	g.iteration++
+	g.stepDelay--
+	if g.stepDelay == 0 {
+		g.step()
+		g.lastStepTime = time.Now()
+		g.iteration++
+		g.stepDelay = 5
+	}
 	return nil
 }
 
@@ -102,15 +105,17 @@ func (g *Game) step() {
 				newY = g.h - 1
 			}
 
-			agent.x = newX
-			agent.y = newY
-
 			moved := false
 			// Only move agent
 			if newAgents[newX][newY] == (Agent{}) {
+				agent.x = newX
+				agent.y = newY
 				newAgents[newX][newY] = agent
 				newAgents[x][y] = Agent{}
 				moved = true
+			} else {
+				newX = x
+				newY = y
 			}
 
 			if agent.infected {
@@ -198,6 +203,7 @@ func newGame(width int, height int, agentCount int, infectedCount int, infection
 	g.agentsCount = agentCount
 	g.infectionDuration = infectionDuration
 	g.lastStepTime = time.Now()
+	g.stepDelay = 20
 	return &g
 }
 

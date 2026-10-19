@@ -9,12 +9,12 @@ import (
 
 func main() {
 
-	w := 200
-	h := 200
+	w := 150
+	h := 150
 	agentCount := 400
 	infectedCount := 200
 	infectionChance := 0.9
-	infectionDuration := 14
+	infectionDuration := 50
 
 	game := newGame(w, h, agentCount, infectedCount, infectionChance, infectionDuration)
 
