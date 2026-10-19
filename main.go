@@ -26,6 +26,7 @@ type Game struct {
 	agents            [][]Agent
 	agentsCount       int
 	infectedCount     int
+	infectedCountNow  int
 	h, w              int
 	infectionChance   float64
 	infectionDuration int
@@ -102,11 +103,13 @@ func (g *Game) step(step int) {
 					newAgents[newX][newY].infectionTimer--
 					if newAgents[newX][newY].infectionTimer == 0 {
 						newAgents[newX][newY].infected = false
+						g.infectedCountNow--
 					}
 				} else {
 					newAgents[x][y].infectionTimer--
 					if newAgents[x][y].infectionTimer == 0 {
 						newAgents[x][y].infected = false
+						g.infectedCountNow--
 					}
 				}
 				// check up down left right
@@ -114,6 +117,7 @@ func (g *Game) step(step int) {
 					shouldInfect := rand.Float64() < g.infectionChance
 					if shouldInfect {
 						newAgents[newX+LEFT][newY].infected = true
+						g.infectedCountNow++
 					}
 				}
 
@@ -121,6 +125,7 @@ func (g *Game) step(step int) {
 					shouldInfect := rand.Float64() < g.infectionChance
 					if shouldInfect {
 						newAgents[newX+RIGHT][newY].infected = true
+						g.infectedCountNow++
 					}
 				}
 
@@ -128,6 +133,7 @@ func (g *Game) step(step int) {
 					shouldInfect := rand.Float64() < g.infectionChance
 					if shouldInfect {
 						newAgents[newX][newY+UP].infected = true
+						g.infectedCountNow++
 					}
 				}
 
@@ -135,11 +141,14 @@ func (g *Game) step(step int) {
 					shouldInfect := rand.Float64() < g.infectionChance
 					if shouldInfect {
 						newAgents[newX][newY+DOWN].infected = true
+						g.infectedCountNow++
 					}
 				}
 			}
 		}
 	}
+
+	fmt.Printf("%d infected\n", g.infectedCountNow)
 
 	g.agents = newAgents
 }
@@ -160,6 +169,7 @@ func newGame(width int, height int, agentCount int, infectedCount int, infection
 		agents[randX][randY].y = randY
 		if infectedCount != 0 {
 			agents[randX][randY].infected = true
+			g.infectedCountNow++
 			agents[randX][randY].infectionTimer = infectionDuration
 			infectedCount--
 		} else {
