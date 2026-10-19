@@ -20,8 +20,8 @@ const (
 )
 
 const (
-	screenWidth  = 320
-	screenHeight = 340
+	screenWidth  = 400
+	screenHeight = 400
 )
 
 type Game struct {
@@ -46,9 +46,9 @@ func (g *Game) Draw(screen *ebiten.Image) {
 		for _, agentState := range agent {
 			if agentState != (Agent{}) {
 				if agentState.infected {
-					vector.FillCircle(screen, float32(agentState.x+gridOffset), float32(agentState.y+gridOffset), 2.5, colornames.Red, true)
+					vector.FillCircle(screen, float32(agentState.x*2+gridOffset), float32(agentState.y*2+gridOffset), 2, colornames.Red, true)
 				} else {
-					vector.FillCircle(screen, float32(agentState.x+gridOffset), float32(agentState.y+gridOffset), 2.5, colornames.Green, true)
+					vector.FillCircle(screen, float32(agentState.x*2+gridOffset), float32(agentState.y*2+gridOffset), 2, colornames.Green, true)
 				}
 			}
 		}

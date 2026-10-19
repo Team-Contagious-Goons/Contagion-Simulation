@@ -12,9 +12,9 @@ func main() {
 	w := 150
 	h := 150
 	agentCount := 400
-	infectedCount := 200
-	infectionChance := 0.9
-	infectionDuration := 50
+	infectedCount := 100
+	infectionChance := 0.5
+	infectionDuration := 40
 
 	game := newGame(w, h, agentCount, infectedCount, infectionChance, infectionDuration)
 
