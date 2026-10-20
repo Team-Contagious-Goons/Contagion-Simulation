@@ -85,20 +85,16 @@ func (g *Game) step(step int) {
 			agent.x = newX
 			agent.y = newY
 
-			moved := false
+			//moved := false
 			// Only move agent
 			if newAgents[newX][newY] == (Agent{}) {
 				newAgents[newX][newY] = agent
 				newAgents[x][y] = Agent{}
-				moved = true
+				//moved = true
 			}
 
 			if agent.infected {
-				if moved {
-					g.handleInfectionTimer(newAgents, newX, newY)
-				} else {
-					g.handleInfectionTimer(newAgents, x, y)
-				}
+				agent.handleInfectionTimer(g)
 				// check up down left right
 				g.checkDirection(newAgents, newX+LEFT, newY)
 				g.checkDirection(newAgents, newX, newY+UP)
@@ -113,10 +109,10 @@ func (g *Game) step(step int) {
 	g.agents = newAgents
 }
 
-func (g *Game) handleInfectionTimer(newAgents [][]Agent, x int, y int) {
-	newAgents[x][y].infectionTimer--
-	if newAgents[x][y].infectionTimer == 0 {
-		newAgents[x][y].infected = false
+func (a *Agent) handleInfectionTimer(g *Game) {
+	a.infectionTimer--
+	if a.infectionTimer == 0 {
+		a.infected = false
 		g.infectedCountNow--
 	}
 }
@@ -126,12 +122,14 @@ func (g *Game) checkDirection(newAgents [][]Agent, x int, y int) {
 		return
 	}
 
-	if newAgents[x][y] != (Agent{}) && !newAgents[x][y].infected {
-		shouldInfect := rand.Float64() < g.infectionChance
-		if shouldInfect {
-			newAgents[x][y].infected = true
-			g.infectedCountNow++
-		}
+	target := &newAgents[x][y]
+	if *target == (Agent{}) || target.infected {
+		return
+	}
+	shouldInfect := rand.Float64() < g.infectionChance
+	if shouldInfect {
+		target.infected = true
+		g.infectedCountNow++
 	}
 }
 
