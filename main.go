@@ -51,21 +51,8 @@ func (g *Game) step(step int) {
 			if agent.infected {
 				targetX, targetY, found := g.find(agent.x, agent.y)
 				if found {
-					if targetX > agent.x {
-						xStep = RIGHT
-					} else if targetX < agent.x {
-						xStep = LEFT
-					} else {
-						xStep = 0
-					}
-
-					if targetY > agent.y {
-						yStep = DOWN
-					} else if targetY < agent.y {
-						yStep = UP
-					} else {
-						yStep = 0
-					}
+					xStep = locationToDirection(targetX, agent.x, RIGHT, LEFT)
+					yStep = locationToDirection(targetY, agent.y, DOWN, UP)
 				}
 			}
 			if !agent.infected {
@@ -93,77 +80,26 @@ func (g *Game) step(step int) {
 			newY := agent.y + yStep
 
 			// Keep agent inside bounds
-			if newX < 0 {
-				newX = 0
-			}
-			if newY < 0 {
-				newY = 0
-			}
-			if newX >= g.w {
-				newX = g.w - 1
-			}
-			if newY >= g.h {
-				newY = g.h - 1
-			}
+			newX, newY = clampBorders(newX, newY, g.w, g.h)
 
 			agent.x = newX
 			agent.y = newY
 
-			moved := false
+			//moved := false
 			// Only move agent
 			if newAgents[newX][newY] == (Agent{}) {
 				newAgents[newX][newY] = agent
 				newAgents[x][y] = Agent{}
-				moved = true
+				//moved = true
 			}
 
 			if agent.infected {
-
-				if moved {
-					newAgents[newX][newY].infectionTimer--
-					if newAgents[newX][newY].infectionTimer == 0 {
-						newAgents[newX][newY].infected = false
-						g.infectedCountNow--
-					}
-				} else {
-					newAgents[x][y].infectionTimer--
-					if newAgents[x][y].infectionTimer == 0 {
-						newAgents[x][y].infected = false
-						g.infectedCountNow--
-					}
-				}
+				agent.handleInfectionTimer(g)
 				// check up down left right
-				if agent.x != 0 && newAgents[newX+LEFT][newY] != (Agent{}) && !newAgents[newX+LEFT][newY].infected {
-					shouldInfect := rand.Float64() < g.infectionChance
-					if shouldInfect {
-						newAgents[newX+LEFT][newY].infected = true
-						g.infectedCountNow++
-					}
-				}
-
-				if agent.x != g.w-1 && newAgents[newX+RIGHT][newY] != (Agent{}) && !newAgents[newX+RIGHT][newY].infected {
-					shouldInfect := rand.Float64() < g.infectionChance
-					if shouldInfect {
-						newAgents[newX+RIGHT][newY].infected = true
-						g.infectedCountNow++
-					}
-				}
-
-				if agent.y != 0 && newAgents[newX][newY+UP] != (Agent{}) && !newAgents[newX][newY+UP].infected {
-					shouldInfect := rand.Float64() < g.infectionChance
-					if shouldInfect {
-						newAgents[newX][newY+UP].infected = true
-						g.infectedCountNow++
-					}
-				}
-
-				if agent.y != g.h-1 && newAgents[newX][newY+DOWN] != (Agent{}) && !newAgents[newX][newY+DOWN].infected {
-					shouldInfect := rand.Float64() < g.infectionChance
-					if shouldInfect {
-						newAgents[newX][newY+DOWN].infected = true
-						g.infectedCountNow++
-					}
-				}
+				g.checkDirection(newAgents, newX+LEFT, newY)
+				g.checkDirection(newAgents, newX, newY+UP)
+				g.checkDirection(newAgents, newX+RIGHT, newY)
+				g.checkDirection(newAgents, newX, newY+DOWN)
 			}
 		}
 	}
@@ -171,6 +107,56 @@ func (g *Game) step(step int) {
 	fmt.Printf("%d infected\n", g.infectedCountNow)
 
 	g.agents = newAgents
+}
+
+func (a *Agent) handleInfectionTimer(g *Game) {
+	a.infectionTimer--
+	if a.infectionTimer == 0 {
+		a.infected = false
+		g.infectedCountNow--
+	}
+}
+
+func (g *Game) checkDirection(newAgents [][]Agent, x int, y int) {
+	if x < 0 || x >= g.w || y < 0 || y >= g.h {
+		return
+	}
+
+	target := &newAgents[x][y]
+	if *target == (Agent{}) || target.infected {
+		return
+	}
+	shouldInfect := rand.Float64() < g.infectionChance
+	if shouldInfect {
+		target.infected = true
+		g.infectedCountNow++
+	}
+}
+
+func clamp(a, min, max int) int {
+	if a < min {
+		a = min
+	}
+	if a > max {
+		a = max
+	}
+	return a
+}
+
+func clampBorders(x, y, w, h int) (int, int) {
+	x = clamp(x, 0, w-1)
+	y = clamp(y, 0, h-1)
+	return x, y
+}
+
+func locationToDirection(a, b, positive, negative int) int {
+	val := 0
+	if a > b {
+		val = positive
+	} else if a < b {
+		val = negative
+	}
+	return val
 }
 
 func newGame(width int, height int, agentCount int, infectedCount int, infectionChance float64, infectionDuration int) *Game {
